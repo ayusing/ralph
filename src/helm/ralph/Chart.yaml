@@ -1,0 +1,17 @@
+apiVersion: v2
+
+name: ralph
+type: application
+description: The official Helm chart for Ralph
+version: 0.2.0
+appVersion: "3.9.0"
+
+dependencies:
+  - name: mongodb
+    version: 13.x.x
+    repository: oci://registry-1.docker.io/bitnamicharts
+    condition: mongodb.enabled
+  - name: clickhouse
+    version: 4.x.x
+    repository: oci://registry-1.docker.io/bitnamicharts
+    condition: clickhouse.enabled

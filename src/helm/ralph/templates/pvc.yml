@@ -1,0 +1,18 @@
+{{- if .Values.volumes.history.enabled }}
+{{- if not .Values.volumes.history.existingClaim -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: "{{ .Values.volumes.history.name }}"
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "ralph.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.volumes.history.accessModes }}
+  resources:
+    requests:
+      storage: {{ .Values.volumes.history.size }}
+  storageClassName: {{ .Values.volumes.history.storageClass }}
+{{- end }}
+{{- end }}

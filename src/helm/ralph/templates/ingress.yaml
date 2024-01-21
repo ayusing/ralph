@@ -1,0 +1,44 @@
+{{- if .Values.ingress.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ template "ralph.fullname" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "ralph.labels" . | nindent 4 }}
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  ingressClassName: {{ .Values.ingress.ingressClassName | quote }}
+
+  {{- $tls := (list) }}
+  rules:
+    {{- $outer := . }}
+    {{- range .Values.ingress.hosts }}
+    {{- if .tls }}
+      {{- $tls = (concat $tls (list .) ) }}
+    {{- end }}
+    {{- range .domains }}
+    - host: {{ . | quote}}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ template "ralph.fullname" $outer }}
+                port:
+                  number: {{ $outer.Values.service.port }}
+    {{- end }}
+    {{- end }}
+  tls:
+    {{- range $tls }}
+    - hosts:
+      {{- range .domains }}
+        - {{ .| quote }}
+      {{- end }}
+      secretName: {{ .tls.secretName }}
+    {{- end }}
+{{- end }}

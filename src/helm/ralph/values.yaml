@@ -1,0 +1,138 @@
+# Ralph Chart default values
+
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: fundocker/ralph
+  pullPolicy: Always
+  tag: ""
+
+replicaCount: 1
+
+imagePullSecrets: []
+
+securityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
+
+podAnnotations: {}
+
+service:
+  type: ClusterIP
+  port: 8080
+  nodePort:
+    http: nil
+
+ingress:
+  enabled: false
+  ingressClassName: ""
+  hosts:
+    - domains:
+        - ralph.example.com
+      tls:
+        secretName: "ralph-example-com-tls"
+  annotations: {}
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: deployment
+                operator: In
+                values:
+                  - "ralph-app"
+          topologyKey: kubernetes.io/hostname
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+resources: {}
+
+envFromSecret: "ralph-env"
+envSecrets: {}
+existingSecret: false
+
+executionEnvironment: "production"
+sentryIgnoreHealthChecks: true
+
+volumes:
+  history:
+    enabled: false
+    name: "ralph-history"
+    claimName: "ralph-pvc-history"
+    size: 2Gi
+    accessModes: ReadWriteMany
+    storageClass: ""
+    # Use an existing claim. If specified, the **history**
+    # PersistentVolumeClaim will **not** be created.
+    existingClaim: ""
+
+lrs:
+  port: 8080
+  authSecretName: "ralph-lrs-auth"
+  # Authentication
+  #
+  # For each entry, we expect the following keys:
+  #   - username (str)
+  #   - hash (str)
+  #   - scopes (list)
+  #
+  # Example:
+  #
+  # auth:
+  #   - username: "foo"
+  #     hash: "thehash"
+  #     scopes:
+  #       - "foo_scope"
+  #
+  # For more information about hash generation, see Ralph's documentation:
+  # https://openfun.github.io/ralph/api/#creating_a_credentials_file
+  auth: []
+  authExistingSecret: false
+  command:
+    - uvicorn
+    - "ralph.api:app"
+    - "--proxy-headers"
+    - "--host"
+    - "0.0.0.0"
+    - "--port"
+    - "8080"
+
+# Ralph cronjob should define a name, a cronjob schedule and a command to execute, e.g.:
+#
+# ralph_cronjobs:
+#   - name: daily-ldp-to-es
+#     schedule: "30 2 * * *"
+#     command:
+#       - ralph list --backend ldp --new |
+#         xargs -I {} -n 1 bash -c "
+#         ralph read --backend ldp {} |
+#         gunzip |
+#         ralph extract -p gelf |
+#         ralph write \
+#         --backend es \
+#         --es-client-options ca_certs=/usr/local/share/ca-certificates/es-cluster.pem"
+cronjobs: []
+
+mongodb:
+  enabled: false
+
+clickhouse:
+  enabled: false
+
+elastic:
+  enabled: false
+  mountCACert: false
+  caSecretName: ""
